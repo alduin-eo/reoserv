@@ -824,8 +824,7 @@ dependencies = [
 [[package]]
 name = "eolib"
 version = "3.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a596585f412ad1459f5099cf3b3fc8e9430e8605fffc3fd9476674318e3a97eb"
+source = "git+https://github.com/alduin-eo/eolib-rs#3a76bd92987edb9199a6b9cffd6ddd19b50ee11c"
 dependencies = [
  "bytes",
  "convert_case 0.11.0",
