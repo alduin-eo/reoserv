@@ -8,7 +8,7 @@ pub async fn create_transaction(
     amount: i32,
     wallet_address: &str,
 ) -> anyhow::Result<Option<i64>> {
-    let now = chrono::Utc::now().timestamp() as i64;
+    let now = chrono::Utc::now().timestamp();
     db.execute(&insert_params(
         "INSERT INTO `character_transaction` (`character_id`, `action`, `amount`, `settled_amount`, `wallet_address`, `status`, `created_at`, `notified`) \
          VALUES (:character_id, :action, :amount, :settled_amount, :wallet_address, :status, :created_at, :notified)",
@@ -85,7 +85,7 @@ pub async fn resolve_transaction(
     status: &str,
     resolved_by_character_id: i32,
 ) -> anyhow::Result<()> {
-    let now = chrono::Utc::now().timestamp() as i64;
+    let now = chrono::Utc::now().timestamp();
     db.execute(&insert_params(
         "UPDATE `character_transaction` \
          SET `status` = :status, `resolved_at` = :resolved_at, `resolved_by` = :resolved_by \

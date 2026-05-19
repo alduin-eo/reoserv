@@ -107,7 +107,7 @@ impl Player {
                 .into_iter()
                 .filter_map(|row| {
                     let id = row.get_int(0).unwrap_or(0);
-                    let created_at = row.get_int(7).unwrap_or(0) as i32;
+                    let created_at = row.get_int(7).unwrap_or(0);
                     let action_str = row.get_string(2)?;
                     let action = match action_str.as_str() {
                         "deposit" => TransactionAction::Deposit,
@@ -166,10 +166,10 @@ impl Player {
 
     pub async fn handle_alduin(&mut self, action: PacketAction, reader: EoReader) {
         // Shared rate limit: 5-second cooldown across all Alduin requests
-        if let Some(last) = self.last_alduin_request {
-            if last.elapsed().as_secs() < 5 {
-                return; // Silently ignore
-            }
+        if let Some(last) = self.last_alduin_request
+            && last.elapsed().as_secs() < 5
+        {
+            return; // Silently ignore
         }
         self.last_alduin_request = Some(std::time::Instant::now());
 
@@ -445,14 +445,14 @@ impl Player {
         }
 
         // Persist inventory changes
-        if let Some(character) = self.character.as_mut() {
-            if let Err(e) = character.save(&self.db).await {
-                error!(
-                    "Failed to save character after removing Alduin items: {}",
-                    e
-                );
-                return;
-            }
+        if let Some(character) = self.character.as_mut()
+            && let Err(e) = character.save(&self.db).await
+        {
+            error!(
+                "Failed to save character after removing Alduin items: {}",
+                e
+            );
+            return;
         }
 
         // Create pending transaction record
@@ -617,14 +617,14 @@ impl Player {
             }
 
             // Persist inventory changes
-            if let Some(character) = self.character.as_mut() {
-                if let Err(e) = character.save(&self.db).await {
-                    error!(
-                        "Failed to save character after refunding Alduin items: {}",
-                        e
-                    );
-                    return;
-                }
+            if let Some(character) = self.character.as_mut()
+                && let Err(e) = character.save(&self.db).await
+            {
+                error!(
+                    "Failed to save character after refunding Alduin items: {}",
+                    e
+                );
+                return;
             }
         }
 
