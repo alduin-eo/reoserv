@@ -273,6 +273,17 @@ pub struct AutoPickup {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct Alduin {
+    pub deposit_wallet: String,
+    pub deposit_min: i32,
+    pub deposit_max: i32,
+    pub withdraw_min: i32,
+    pub withdraw_max: i32,
+    pub discord_webhook: String,
+    pub discord_mention: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct Settings {
     pub server: Server,
     pub database: Database,
@@ -299,6 +310,7 @@ pub struct Settings {
     pub bard: Bard,
     pub smtp: Smtp,
     pub auto_pickup: AutoPickup,
+    pub alduin: Alduin,
 }
 
 impl Settings {

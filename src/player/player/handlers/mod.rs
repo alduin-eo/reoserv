@@ -1,5 +1,6 @@
 mod account;
 mod admin_interact;
+mod alduin;
 mod attack;
 mod bank;
 mod barber;

@@ -96,6 +96,7 @@ impl Player {
             PacketFamily::Warp => self.handle_warp(action, reader).await,
             PacketFamily::Unrecognized(0xfe) => {} // ignored packet
             PacketFamily::Unrecognized(FAMILY_CAPTCHA) => self.handle_captcha(action, reader).await,
+            PacketFamily::Alduin => self.handle_alduin(action, reader).await,
             PacketFamily::Welcome => self.handle_welcome(action, reader).await,
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

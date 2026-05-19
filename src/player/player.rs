@@ -1,4 +1,4 @@
-use std::{cell::RefCell, collections::VecDeque};
+use std::{cell::RefCell, collections::VecDeque, time::Instant};
 
 use bytes::Bytes;
 use chrono::{DateTime, Utc};
@@ -46,6 +46,7 @@ pub struct Player {
     captcha: Option<Captcha>,
     timestamp: i32,
     spell_id: Option<i32>,
+    last_alduin_request: Option<Instant>,
 }
 
 mod account;
@@ -118,6 +119,7 @@ impl Player {
             captcha: None,
             timestamp: 0,
             spell_id: None,
+            last_alduin_request: None,
         }
     }
 
