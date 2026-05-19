@@ -4,7 +4,7 @@ use eolib::{
     protocol::net::{PacketAction, PacketFamily},
 };
 
-use crate::{SETTINGS, deep::{FAMILY_ALDUIN, FAMILY_CAPTCHA}};
+use crate::{SETTINGS, deep::FAMILY_CAPTCHA};
 
 use super::{ClientState, Player};
 
@@ -23,7 +23,6 @@ impl Player {
         if let PacketFamily::Unrecognized(id) = family
             && id != 0xfe
             && id != FAMILY_CAPTCHA
-            && id != FAMILY_ALDUIN
         {
             self.close("invalid packet family".to_string()).await;
             return;
@@ -97,7 +96,7 @@ impl Player {
             PacketFamily::Warp => self.handle_warp(action, reader).await,
             PacketFamily::Unrecognized(0xfe) => {} // ignored packet
             PacketFamily::Unrecognized(FAMILY_CAPTCHA) => self.handle_captcha(action, reader).await,
-            PacketFamily::Unrecognized(FAMILY_ALDUIN) => self.handle_alduin(action, reader).await,
+            PacketFamily::Alduin => self.handle_alduin(action, reader).await,
             PacketFamily::Welcome => self.handle_welcome(action, reader).await,
             _ => {
                 error!("Unhandled packet {:?}_{:?}", action, family);

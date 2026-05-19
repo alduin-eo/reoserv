@@ -9,7 +9,7 @@ use eolib::{
 use crate::{
     SETTINGS,
     db::{count_alduin_inventory, count_character_transactions, count_pending_withdrawals, create_transaction, get_character_transactions_paginated, get_pending_transaction, get_transaction_by_id_for_character, resolve_transaction},
-    deep::FAMILY_ALDUIN,
+
     utils::{send_alduin_cancel_webhook, send_alduin_deposit_webhook, send_alduin_withdraw_webhook},
 };
 
@@ -151,7 +151,7 @@ impl Player {
 
         let _ = self
             .bus
-            .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+            .send(PacketAction::Reply, PacketFamily::Alduin, packet)
             .await;
     }
 
@@ -206,7 +206,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -219,7 +219,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -232,7 +232,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -252,7 +252,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -300,7 +300,7 @@ impl Player {
         };
         let _ = self
             .bus
-            .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+            .send(PacketAction::Reply, PacketFamily::Alduin, packet)
             .await;
 
         // Fire Discord webhook asynchronously (don't block)
@@ -356,7 +356,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -369,7 +369,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -389,7 +389,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -402,7 +402,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -422,7 +422,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -486,7 +486,7 @@ impl Player {
         };
         let _ = self
             .bus
-            .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+            .send(PacketAction::Reply, PacketFamily::Alduin, packet)
             .await;
 
         // Fire Discord webhook asynchronously (don't block)
@@ -547,7 +547,7 @@ impl Player {
                 };
                 let _ = self
                     .bus
-                    .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                    .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                     .await;
                 return;
             }
@@ -572,7 +572,7 @@ impl Player {
             };
             let _ = self
                 .bus
-                .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+                .send(PacketAction::Reply, PacketFamily::Alduin, packet)
                 .await;
             return;
         }
@@ -639,7 +639,7 @@ impl Player {
         };
         let _ = self
             .bus
-            .send(PacketAction::Reply, PacketFamily::Unrecognized(FAMILY_ALDUIN), packet)
+            .send(PacketAction::Reply, PacketFamily::Alduin, packet)
             .await;
 
         // Fire Discord webhook asynchronously (don't block)
