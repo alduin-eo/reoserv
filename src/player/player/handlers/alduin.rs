@@ -2,20 +2,29 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
         PacketAction, PacketFamily, TransactionAction,
-        client::{AlduinAddClientPacket, AlduinRemoveClientPacket, AlduinRequestClientPacket, AlduinSpecClientPacket},
+        client::{
+            AlduinAddClientPacket, AlduinRemoveClientPacket, AlduinRequestClientPacket,
+            AlduinSpecClientPacket,
+        },
     },
 };
 
 use crate::{
     SETTINGS,
-    db::{count_alduin_inventory, count_character_transactions, count_pending_withdrawals, create_transaction, get_character_transactions_paginated, get_pending_transaction, get_transaction_by_id_for_character, resolve_transaction},
-
-    utils::{send_alduin_cancel_webhook, send_alduin_deposit_webhook, send_alduin_withdraw_webhook},
+    db::{
+        count_alduin_inventory, count_character_transactions, count_pending_withdrawals,
+        create_transaction, get_character_transactions_paginated, get_pending_transaction,
+        get_transaction_by_id_for_character, resolve_transaction,
+    },
+    utils::{
+        send_alduin_cancel_webhook, send_alduin_deposit_webhook, send_alduin_withdraw_webhook,
+    },
 };
 
 use eolib::protocol::net::server::{
     AlduinReply, AlduinReplyServerPacket, AlduinReplyServerPacketReplyData,
-    AlduinReplyServerPacketReplyDataNotify, AlduinReplyServerPacketReplyDataWallet, TransactionEntry, TransactionStatus,
+    AlduinReplyServerPacketReplyDataNotify, AlduinReplyServerPacketReplyDataWallet,
+    TransactionEntry, TransactionStatus,
 };
 
 use super::super::Player;
@@ -438,7 +447,10 @@ impl Player {
         // Persist inventory changes
         if let Some(character) = self.character.as_mut() {
             if let Err(e) = character.save(&self.db).await {
-                error!("Failed to save character after removing Alduin items: {}", e);
+                error!(
+                    "Failed to save character after removing Alduin items: {}",
+                    e
+                );
                 return;
             }
         }
@@ -537,7 +549,9 @@ impl Player {
         let transaction_id = spec.transaction_id as i64;
 
         // Validate: transaction exists and belongs to this character
-        let row = match get_transaction_by_id_for_character(&self.db, transaction_id, character_id).await {
+        let row = match get_transaction_by_id_for_character(&self.db, transaction_id, character_id)
+            .await
+        {
             Ok(Some(row)) => row,
             Ok(None) => {
                 // Transaction not found or doesn't belong to this character
@@ -605,14 +619,19 @@ impl Player {
             // Persist inventory changes
             if let Some(character) = self.character.as_mut() {
                 if let Err(e) = character.save(&self.db).await {
-                    error!("Failed to save character after refunding Alduin items: {}", e);
+                    error!(
+                        "Failed to save character after refunding Alduin items: {}",
+                        e
+                    );
                     return;
                 }
             }
         }
 
         // Mark transaction as cancelled
-        if let Err(e) = resolve_transaction(&self.db, transaction_id, "cancelled", character_id).await {
+        if let Err(e) =
+            resolve_transaction(&self.db, transaction_id, "cancelled", character_id).await
+        {
             error!("Failed to resolve transaction as cancelled: {}", e);
             return;
         }

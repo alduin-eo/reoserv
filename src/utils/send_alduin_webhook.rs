@@ -129,7 +129,11 @@ pub async fn send_alduin_cancel_webhook(
     action: &str,
     transaction_id: i64,
 ) {
-    let action_label = if action == "deposit" { "Deposit" } else { "Withdraw" };
+    let action_label = if action == "deposit" {
+        "Deposit"
+    } else {
+        "Withdraw"
+    };
     let payload = serde_json::json!({
         "content": format!("{} 🔕 **Alduin Transaction Cancelled**", mention),
         "embeds": [{

@@ -145,10 +145,7 @@ pub async fn get_unnotified_resolved_transactions(
 }
 
 /// Marks a transaction as notified.
-pub async fn mark_transaction_notified(
-    db: &DbHandle,
-    transaction_id: i64,
-) -> anyhow::Result<()> {
+pub async fn mark_transaction_notified(db: &DbHandle, transaction_id: i64) -> anyhow::Result<()> {
     db.execute(&insert_params(
         "UPDATE `character_transaction` SET `notified` = 1 WHERE `id` = :transaction_id",
         &[("transaction_id", &transaction_id)],
