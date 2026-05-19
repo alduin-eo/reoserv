@@ -274,6 +274,7 @@ pub struct AutoPickup {
 
 #[derive(Debug, Deserialize)]
 pub struct Alduin {
+    pub deposit_wallet: String,
     pub deposit_min: i32,
     pub deposit_max: i32,
     pub withdraw_min: i32,

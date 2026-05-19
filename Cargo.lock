@@ -824,7 +824,7 @@ dependencies = [
 [[package]]
 name = "eolib"
 version = "3.0.0"
-source = "git+https://github.com/alduin-eo/eolib-rs#3a76bd92987edb9199a6b9cffd6ddd19b50ee11c"
+source = "git+https://github.com/alduin-eo/eolib-rs#e0d81c1c753a3c90ac17e18dd4e3248105b4405f"
 dependencies = [
  "bytes",
  "convert_case 0.11.0",

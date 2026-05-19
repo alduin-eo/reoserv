@@ -155,3 +155,51 @@ pub async fn mark_transaction_notified(
     ))
     .await
 }
+
+/// Counts pending outgoing (withdrawal) transactions for a character.
+pub async fn count_pending_withdrawals(db: &DbHandle, character_id: i32) -> anyhow::Result<i32> {
+    Ok(db
+        .query_int(&insert_params(
+            "SELECT COUNT(*) \
+             FROM `character_transaction` \
+             WHERE `character_id` = :character_id AND `action` = 'withdraw' AND `status` = 'pending'",
+            &[("character_id", &character_id)],
+        ))
+        .await?
+        .unwrap_or(0))
+}
+
+/// Gets total transaction count for a character.
+pub async fn count_character_transactions(db: &DbHandle, character_id: i32) -> anyhow::Result<i32> {
+    Ok(db
+        .query_int(&insert_params(
+            "SELECT COUNT(*) \
+             FROM `character_transaction` \
+             WHERE `character_id` = :character_id",
+            &[("character_id", &character_id)],
+        ))
+        .await?
+        .unwrap_or(0))
+}
+
+/// Gets paginated transaction history for a character, ordered by created_at DESC.
+pub async fn get_character_transactions_paginated(
+    db: &DbHandle,
+    character_id: i32,
+    page: i32,
+    per_page: i32,
+) -> anyhow::Result<Vec<Row>> {
+    let offset = (page - 1) * per_page;
+    db.query(&insert_params(
+        "SELECT `id`, `character_id`, `action`, `amount`, `settled_amount`, `wallet_address`, `status`, `created_at`, `resolved_at`, `resolved_by`, `notified` \
+         FROM `character_transaction` \
+         WHERE `character_id` = :character_id \
+         ORDER BY `created_at` DESC LIMIT :limit OFFSET :offset",
+        &[
+            ("character_id", &character_id),
+            ("limit", &per_page),
+            ("offset", &offset),
+        ],
+    ))
+    .await
+}
