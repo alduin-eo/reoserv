@@ -31,7 +31,8 @@ pub async fn resolve_transaction(
     world: &WorldHandle,
     tx_id: i32,
     new_status: TransactionStatus,
-    resolved_by: &str,
+    resolved_by_name: &str,
+    comment: &str,
 ) -> anyhow::Result<ResolutionResult> {
     let row = db
         .query_one(&insert_params(
@@ -117,12 +118,14 @@ pub async fn resolve_transaction(
             let now = chrono::Utc::now().timestamp() as i32;
             db.execute(&insert_params(
                 "UPDATE character_transaction \
-                 SET status_id = :status, resolved_at = :now, notified = 1, resolved_by_name = :by \
+                 SET status_id = :status, resolved_at = :now, notified = 1, \
+                     resolved_by_name = :by, comment = :comment \
                  WHERE id = :id",
                 &[
                     ("status", &new_status_id),
                     ("now", &now),
-                    ("by", &resolved_by),
+                    ("by", &resolved_by_name),
+                    ("comment", &comment),
                     ("id", &tx_id),
                 ],
             ))
@@ -146,12 +149,14 @@ pub async fn resolve_transaction(
             let now = chrono::Utc::now().timestamp() as i32;
             db.execute(&insert_params(
                 "UPDATE character_transaction \
-                 SET status_id = :status, resolved_at = :now, resolved_by_name = :by \
+                 SET status_id = :status, resolved_at = :now, \
+                     resolved_by_name = :by, comment = :comment \
                  WHERE id = :id",
                 &[
                     ("status", &new_status_id),
                     ("now", &now),
-                    ("by", &resolved_by),
+                    ("by", &resolved_by_name),
+                    ("comment", &comment),
                     ("id", &tx_id),
                 ],
             ))
@@ -186,12 +191,14 @@ pub async fn resolve_transaction(
 
             db.execute(&insert_params(
                 "UPDATE character_transaction \
-                 SET status_id = :status, resolved_at = :now, notified = 1, resolved_by_name = :by \
+                 SET status_id = :status, resolved_at = :now, notified = 1, \
+                     resolved_by_name = :by, comment = :comment \
                  WHERE id = :id",
                 &[
                     ("status", &new_status_id),
                     ("now", &now),
-                    ("by", &resolved_by),
+                    ("by", &resolved_by_name),
+                    ("comment", &comment),
                     ("id", &tx_id),
                 ],
             ))
@@ -199,12 +206,14 @@ pub async fn resolve_transaction(
         } else {
             db.execute(&insert_params(
                 "UPDATE character_transaction \
-                 SET status_id = :status, resolved_at = :now, resolved_by_name = :by \
+                 SET status_id = :status, resolved_at = :now, \
+                     resolved_by_name = :by, comment = :comment \
                  WHERE id = :id",
                 &[
                     ("status", &new_status_id),
                     ("now", &now),
-                    ("by", &resolved_by),
+                    ("by", &resolved_by_name),
+                    ("comment", &comment),
                     ("id", &tx_id),
                 ],
             ))

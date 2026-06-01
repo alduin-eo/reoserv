@@ -162,7 +162,13 @@ fn map_sqlite_value(value: rusqlite::types::ValueRef<'_>) -> SqlValue {
     match value {
         rusqlite::types::ValueRef::Null => SqlValue::Null,
         rusqlite::types::ValueRef::Text(buffer) => map_utf8_buffer(buffer),
-        rusqlite::types::ValueRef::Integer(value) => SqlValue::Int(value as i32),
+        rusqlite::types::ValueRef::Integer(value) => {
+            if value > i32::MAX as i64 || value < i32::MIN as i64 {
+                SqlValue::String(value.to_string())
+            } else {
+                SqlValue::Int(value as i32)
+            }
+        }
         rusqlite::types::ValueRef::Blob(buffer) => map_blob_as_string(buffer),
         unsupported => {
             tracing::error!("Unsupported SQLite value type: {:?}", unsupported);

@@ -16,6 +16,9 @@ pub enum DiscordCommand {
         amount: i32,
         wallet_address: String,
     },
+    TransactionCancelled {
+        tx_id: i32,
+    },
 }
 
 pub type DiscordTx = UnboundedSender<DiscordCommand>;

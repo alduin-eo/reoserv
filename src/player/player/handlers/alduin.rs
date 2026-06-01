@@ -51,7 +51,7 @@ async fn send_wallet_reply(
 
     let entries = match db
         .query(&insert_params(
-            "SELECT id, created_at, action_id, amount, wallet_address, status_id \
+            "SELECT id, created_at, action_id, amount, wallet_address, status_id, comment \
              FROM character_transaction WHERE character_id = :character_id \
              ORDER BY created_at DESC LIMIT :limit OFFSET :offset",
             &[
@@ -70,6 +70,7 @@ async fn send_wallet_reply(
                 action: TransactionAction::from(row.get_int(2).unwrap_or(0)),
                 amount: row.get_int(3).unwrap_or(0),
                 wallet_address: row.get_string(4).unwrap_or_default(),
+                comment: row.get_string(6).unwrap_or_default(),
                 status: TransactionStatus::from(row.get_int(5).unwrap_or(0)),
             })
             .collect(),
@@ -517,6 +518,12 @@ impl Player {
                 .is_err()
             {
                 return;
+            }
+
+            if let Some(tx) = crate::discord::get_discord_tx() {
+                let _ = tx.send(crate::discord::DiscordCommand::TransactionCancelled {
+                    tx_id: packet.transaction_id,
+                });
             }
 
             let current_amount = character.get_item_amount(config.alduin_item_id);
