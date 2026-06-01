@@ -1264,6 +1264,60 @@ impl Default for AutoPickup {
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Alduin {
+    #[serde(default = "default_alduin_deposit_wallet")]
+    pub deposit_wallet: String,
+    #[serde(default = "default_alduin_deposit_min")]
+    pub deposit_min: i32,
+    #[serde(default = "default_alduin_deposit_max")]
+    pub deposit_max: i32,
+    #[serde(default = "default_alduin_withdraw_min")]
+    pub withdraw_min: i32,
+    #[serde(default = "default_alduin_withdraw_max")]
+    pub withdraw_max: i32,
+    #[serde(default = "default_alduin_alduin_item_id")]
+    pub alduin_item_id: i32,
+    #[serde(default = "default_alduin_transactions_per_page")]
+    pub transactions_per_page: i32,
+}
+
+fn default_alduin_deposit_wallet() -> String {
+    "".to_string()
+}
+fn default_alduin_deposit_min() -> i32 {
+    1
+}
+fn default_alduin_deposit_max() -> i32 {
+    2_000_000_000
+}
+fn default_alduin_withdraw_min() -> i32 {
+    1
+}
+fn default_alduin_withdraw_max() -> i32 {
+    2_000_000_000
+}
+fn default_alduin_alduin_item_id() -> i32 {
+    0
+}
+fn default_alduin_transactions_per_page() -> i32 {
+    10
+}
+
+impl Default for Alduin {
+    fn default() -> Self {
+        Self {
+            deposit_wallet: default_alduin_deposit_wallet(),
+            deposit_min: default_alduin_deposit_min(),
+            deposit_max: default_alduin_deposit_max(),
+            withdraw_min: default_alduin_withdraw_min(),
+            withdraw_max: default_alduin_withdraw_max(),
+            alduin_item_id: default_alduin_alduin_item_id(),
+            transactions_per_page: default_alduin_transactions_per_page(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     #[serde(default)]
@@ -1316,6 +1370,8 @@ pub struct Settings {
     pub smtp: Smtp,
     #[serde(default)]
     pub auto_pickup: AutoPickup,
+    #[serde(default)]
+    pub alduin: Alduin,
 }
 
 impl Settings {

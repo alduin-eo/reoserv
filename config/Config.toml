@@ -467,3 +467,26 @@ enabled = false
 
 # How often in ticks players will pickup nearby items
 rate = 8
+
+[alduin]
+
+# Wallet address shown to players for deposits
+deposit_wallet = ""
+
+# Minimum amount for a single deposit transaction
+deposit_min = 1
+
+# Maximum amount for a single deposit transaction
+deposit_max = 2_000_000_000
+
+# Minimum amount for a single withdraw transaction
+withdraw_min = 1
+
+# Maximum amount for a single withdraw transaction
+withdraw_max = 2_000_000_000
+
+# Item ID that represents alduin tokens in the character's inventory
+alduin_item_id = 0
+
+# Number of transactions shown per page in the wallet history
+transactions_per_page = 10

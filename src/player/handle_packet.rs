@@ -55,6 +55,7 @@ impl Player {
         match family {
             PacketFamily::Account => self.handle_account(action, reader).await,
             PacketFamily::AdminInteract => self.handle_admin_interact(action, reader),
+            PacketFamily::Alduin => self.handle_alduin(action, reader),
             PacketFamily::Attack => self.handle_attack(action, reader),
             PacketFamily::Bank => self.handle_bank(action, reader),
             PacketFamily::Barber => self.handle_barber(action, reader),
