@@ -4,7 +4,10 @@ use eolib::{
     data::{EoReader, EoSerialize},
     protocol::net::{
         PacketAction, PacketFamily, TransactionAction,
-        client::{AlduinAddClientPacket, AlduinRemoveClientPacket, AlduinRequestClientPacket},
+        client::{
+            AlduinAddClientPacket, AlduinRemoveClientPacket, AlduinRequestClientPacket,
+            AlduinSpecClientPacket,
+        },
         server::{
             AlduinReply, AlduinReplyServerPacket, AlduinReplyServerPacketReplyData,
             AlduinReplyServerPacketReplyDataWallet, TransactionEntry, TransactionStatus,
@@ -217,11 +220,15 @@ impl Player {
                 return;
             }
 
+            let status_pending: i32 = TransactionStatus::Pending.into();
             let has_pending = match db
                 .query_one(&insert_params(
                     "SELECT COUNT(*) FROM character_transaction \
-                     WHERE character_id = :character_id AND status_id = 0",
-                    &[("character_id", &character.id)],
+                     WHERE character_id = :character_id AND status_id = :status_pending",
+                    &[
+                        ("character_id", &character.id),
+                        ("status_pending", &status_pending),
+                    ],
                 ))
                 .await
             {
@@ -241,16 +248,20 @@ impl Player {
                 return;
             }
 
+            let action_id: i32 = TransactionAction::Deposit.into();
+            let status_pending: i32 = TransactionStatus::Pending.into();
             let now = chrono::Utc::now().timestamp() as i32;
             if db
                 .execute(&insert_params(
                     "INSERT INTO character_transaction \
                      (character_id, action_id, amount, wallet_address, status_id, created_at) \
-                     VALUES (:character_id, 0, :amount, :wallet_address, 0, :created_at)",
+                     VALUES (:character_id, :action_id, :amount, :wallet_address, :status_pending, :created_at)",
                     &[
                         ("character_id", &character.id),
+                        ("action_id", &action_id),
                         ("amount", &packet.amount),
                         ("wallet_address", &packet.wallet_address),
+                        ("status_pending", &status_pending),
                         ("created_at", &now),
                     ],
                 ))
@@ -324,11 +335,15 @@ impl Player {
                 return;
             }
 
+            let status_pending: i32 = TransactionStatus::Pending.into();
             let has_pending = match db
                 .query_one(&insert_params(
                     "SELECT COUNT(*) FROM character_transaction \
-                     WHERE character_id = :character_id AND status_id = 0",
-                    &[("character_id", &character.id)],
+                     WHERE character_id = :character_id AND status_id = :status_pending",
+                    &[
+                        ("character_id", &character.id),
+                        ("status_pending", &status_pending),
+                    ],
                 ))
                 .await
             {
@@ -348,16 +363,20 @@ impl Player {
                 return;
             }
 
+            let action_id: i32 = TransactionAction::Withdraw.into();
+            let status_pending: i32 = TransactionStatus::Pending.into();
             let now = chrono::Utc::now().timestamp() as i32;
             if db
                 .execute(&insert_params(
                     "INSERT INTO character_transaction \
                      (character_id, action_id, amount, wallet_address, status_id, created_at) \
-                     VALUES (:character_id, 1, :amount, :wallet_address, 0, :created_at)",
+                     VALUES (:character_id, :action_id, :amount, :wallet_address, :status_pending, :created_at)",
                     &[
                         ("character_id", &character.id),
+                        ("action_id", &action_id),
                         ("amount", &packet.amount),
                         ("wallet_address", &packet.wallet_address),
+                        ("status_pending", &status_pending),
                         ("created_at", &now),
                     ],
                 ))
@@ -373,6 +392,123 @@ impl Player {
         });
     }
 
+    async fn alduin_spec(&mut self, reader: EoReader) {
+        let packet = match AlduinSpecClientPacket::deserialize(&reader) {
+            Ok(packet) => packet,
+            Err(e) => {
+                tracing::error!("Failed to deserialize AlduinSpecClientPacket: {}", e);
+                return;
+            }
+        };
+
+        let map = match &self.map {
+            Some(map) => map.to_owned(),
+            None => return,
+        };
+
+        let player_id = self.id;
+        let db = self.db.clone();
+
+        tokio::spawn(async move {
+            let character = match map
+                .get_character(player_id)
+                .await
+                .expect("Failed to get character. Timeout")
+            {
+                Some(character) => character,
+                None => return,
+            };
+
+            let player = match &character.player {
+                Some(player) => player.clone(),
+                None => return,
+            };
+
+            let config = SETTINGS.load().alduin.clone();
+
+            let transaction = match db
+                .query_one(&insert_params(
+                    "SELECT character_id, status_id, action_id, amount \
+                     FROM character_transaction WHERE id = :id",
+                    &[("id", &packet.transaction_id)],
+                ))
+                .await
+            {
+                Ok(Some(row)) => row,
+                _ => {
+                    player.send(
+                        PacketAction::Reply,
+                        PacketFamily::Alduin,
+                        &AlduinReplyServerPacket {
+                            reply: AlduinReply::TransactionNotFound,
+                            reply_data: None,
+                        },
+                    );
+                    return;
+                }
+            };
+
+            let tx_character_id = transaction.get_int(0).unwrap_or(0);
+            if tx_character_id != character.id {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Alduin,
+                    &AlduinReplyServerPacket {
+                        reply: AlduinReply::NotYourTransaction,
+                        reply_data: None,
+                    },
+                );
+                return;
+            }
+
+            let status_id = transaction.get_int(1).unwrap_or(0);
+            if TransactionStatus::from(status_id) != TransactionStatus::Pending {
+                player.send(
+                    PacketAction::Reply,
+                    PacketFamily::Alduin,
+                    &AlduinReplyServerPacket {
+                        reply: AlduinReply::TransactionNotPending,
+                        reply_data: None,
+                    },
+                );
+                return;
+            }
+
+            let action_id = transaction.get_int(2).unwrap_or(0);
+            let tx_amount = transaction.get_int(3).unwrap_or(0);
+
+            let status_cancelled: i32 = TransactionStatus::Cancelled.into();
+            let now = chrono::Utc::now().timestamp() as i32;
+            if db
+                .execute(&insert_params(
+                    "UPDATE character_transaction \
+                     SET status_id = :status_cancelled, resolved_at = :now, resolved_by = :character_id \
+                     WHERE id = :id",
+                    &[
+                        ("status_cancelled", &status_cancelled),
+                        ("now", &now),
+                        ("character_id", &character.id),
+                        ("id", &packet.transaction_id),
+                    ],
+                ))
+                .await
+                .is_err()
+            {
+                return;
+            }
+
+            let current_amount = character.get_item_amount(config.alduin_item_id);
+            let new_balance = if TransactionAction::from(action_id) == TransactionAction::Withdraw {
+                map.give_item(player_id, config.alduin_item_id, tx_amount);
+                current_amount + tx_amount
+            } else {
+                current_amount
+            };
+
+            send_wallet_reply(db, player, character.id, new_balance, 1).await;
+        });
+    }
+
     pub async fn handle_alduin(&mut self, action: PacketAction, reader: EoReader) {
         if self.trading {
             return;
@@ -382,6 +518,7 @@ impl Player {
             PacketAction::Request => self.alduin_request(reader).await,
             PacketAction::Add => self.alduin_add(reader).await,
             PacketAction::Remove => self.alduin_remove(reader).await,
+            PacketAction::Spec => self.alduin_spec(reader).await,
             _ => tracing::error!("Unhandled packet Alduin_{:?}", action),
         }
     }
