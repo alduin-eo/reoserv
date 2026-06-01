@@ -1,14 +1,18 @@
 use eolib::protocol::net::{
     PacketAction, PacketFamily,
     server::{
-        SitState, WelcomeCode, WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
+        AlduinReply, AlduinReplyServerPacket, AlduinReplyServerPacketReplyData,
+        AlduinReplyServerPacketReplyDataNotify, SitState, TransactionStatus, WelcomeCode,
+        WelcomeReplyServerPacket, WelcomeReplyServerPacketWelcomeCodeData,
         WelcomeReplyServerPacketWelcomeCodeDataEnterGame,
     },
 };
 use std::{io::Cursor, path::Path};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt};
 
-use crate::{errors::WrongSessionIdError, player::ClientState, utils::is_deep};
+use crate::{
+    SETTINGS, db::insert_params, errors::WrongSessionIdError, player::ClientState, utils::is_deep,
+};
 
 use super::Player;
 
@@ -65,6 +69,65 @@ impl Player {
         map.enter(Box::new(character), None)
             .await
             .expect("Failed to enter map. Timeout");
+
+        if let Some(character_id) = self.character_id {
+            let alduin_item_id = SETTINGS.load().alduin.alduin_item_id;
+            if alduin_item_id > 0 {
+                let current_balance = self
+                    .db
+                    .query_int(&insert_params(
+                        "SELECT quantity FROM character_inventory \
+                         WHERE character_id = :cid AND item_id = :iid",
+                        &[("cid", &character_id), ("iid", &alduin_item_id)],
+                    ))
+                    .await
+                    .unwrap_or(None)
+                    .unwrap_or(0);
+
+                let rows = self
+                    .db
+                    .query(&insert_params(
+                        "SELECT id, action_id, amount, status_id \
+                         FROM character_transaction \
+                         WHERE character_id = :cid AND notified = 0 AND status_id IN (1, 2)",
+                        &[("cid", &character_id)],
+                    ))
+                    .await
+                    .unwrap_or_default();
+
+                for row in &rows {
+                    let tx_id = row.get_int(0).unwrap_or(0);
+                    let _action_id = row.get_int(1).unwrap_or(0);
+                    let amount = row.get_int(2).unwrap_or(0);
+                    let status_id = row.get_int(3).unwrap_or(0);
+
+                    let notify_packet = AlduinReplyServerPacket {
+                        reply: AlduinReply::Notify,
+                        reply_data: Some(AlduinReplyServerPacketReplyData::Notify(
+                            AlduinReplyServerPacketReplyDataNotify {
+                                transaction_id: tx_id,
+                                status: TransactionStatus::from(status_id),
+                                transaction_amount: amount,
+                                total_alduin: current_balance,
+                            },
+                        )),
+                    };
+
+                    let _ = self
+                        .bus
+                        .send(PacketAction::Reply, PacketFamily::Alduin, notify_packet)
+                        .await;
+
+                    let _ = self
+                        .db
+                        .execute(&insert_params(
+                            "UPDATE character_transaction SET notified = 1 WHERE id = :id",
+                            &[("id", &tx_id)],
+                        ))
+                        .await;
+                }
+            }
+        }
 
         let nearby_info = map
             .get_nearby_info(self.id)

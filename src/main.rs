@@ -32,7 +32,9 @@ mod player_commands;
 use player::Socket;
 use player_commands::PlayerCommands;
 mod connection_log;
+mod discord;
 mod formulas;
+mod resolve_transaction;
 use formulas::Formulas;
 mod emails;
 mod errors;
@@ -209,6 +211,16 @@ async fn main() -> anyhow::Result<()> {
             .load_maps()
             .await
             .expect("Failed to load maps. Timeout");
+    }
+
+    let (_discord_tx, discord_rx) = discord::init_channel();
+    if SETTINGS.load().discord.enabled {
+        let bot_db = db.clone();
+        let bot_world = world.clone();
+        tokio::spawn(async move {
+            discord::start(discord_rx, bot_db, bot_world).await;
+        });
+        tracing::info!("Discord bot enabled");
     }
 
     let mut tick_interval = time::interval(Duration::from_millis(

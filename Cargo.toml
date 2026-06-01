@@ -48,6 +48,7 @@ tokio-tungstenite = "0.29"
 hex = "0.4"
 rusqlite = { version = "0.40.0", features = ["bundled"] }
 regex = "1.12.3"
+serenity = { version = "0.12", default-features = false, features = ["client", "gateway", "model", "rustls_backend"] }
 tracing = "0.1"
 tracing-subscriber = {version = "0.3", features = ["env-filter", "chrono", "fmt"] }
 arc-swap = "1.9.1"

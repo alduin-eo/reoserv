@@ -271,6 +271,17 @@ impl Player {
                 return;
             }
 
+            let tx_id = db.get_last_insert_id().await.unwrap_or(0) as i32;
+            if let Some(tx) = crate::discord::get_discord_tx() {
+                let _ = tx.send(crate::discord::DiscordCommand::NewTransaction {
+                    tx_id,
+                    character_name: character.name.clone(),
+                    action: 0,
+                    amount: packet.amount,
+                    wallet_address: packet.wallet_address.clone(),
+                });
+            }
+
             send_wallet_reply(db, player, character.id, current_amount, 1).await;
         });
     }
@@ -384,6 +395,17 @@ impl Player {
                 .is_err()
             {
                 return;
+            }
+
+            let tx_id = db.get_last_insert_id().await.unwrap_or(0) as i32;
+            if let Some(tx) = crate::discord::get_discord_tx() {
+                let _ = tx.send(crate::discord::DiscordCommand::NewTransaction {
+                    tx_id,
+                    character_name: character.name.clone(),
+                    action: 1,
+                    amount: packet.amount,
+                    wallet_address: packet.wallet_address.clone(),
+                });
             }
 
             map.lose_item(player_id, config.alduin_item_id, packet.amount);

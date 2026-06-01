@@ -1318,6 +1318,45 @@ impl Default for Alduin {
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct Discord {
+    #[serde(default = "default_discord_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_discord_token")]
+    pub token: String,
+    #[serde(default = "default_discord_guild_id")]
+    pub guild_id: u64,
+    #[serde(default = "default_discord_channel_id")]
+    pub channel_id: u64,
+    #[serde(default)]
+    pub allowed_roles: Vec<u64>,
+}
+
+fn default_discord_enabled() -> bool {
+    false
+}
+fn default_discord_token() -> String {
+    "".to_string()
+}
+fn default_discord_guild_id() -> u64 {
+    0
+}
+fn default_discord_channel_id() -> u64 {
+    0
+}
+
+impl Default for Discord {
+    fn default() -> Self {
+        Self {
+            enabled: default_discord_enabled(),
+            token: default_discord_token(),
+            guild_id: default_discord_guild_id(),
+            channel_id: default_discord_channel_id(),
+            allowed_roles: Vec::new(),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 pub struct Settings {
     #[serde(default)]
@@ -1372,6 +1411,8 @@ pub struct Settings {
     pub auto_pickup: AutoPickup,
     #[serde(default)]
     pub alduin: Alduin,
+    #[serde(default)]
+    pub discord: Discord,
 }
 
 impl Settings {

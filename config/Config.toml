@@ -490,3 +490,19 @@ alduin_item_id = 0
 
 # Number of transactions shown per page in the wallet history
 transactions_per_page = 10
+
+[discord]
+# Set to true to enable the Discord bot integration
+enabled = false
+
+# Discord bot token
+token = ""
+
+# Guild ID where slash commands are registered
+guild_id = 0
+
+# Channel ID where transaction notifications are posted
+channel_id = 0
+
+# Role IDs allowed to approve/decline transactions
+allowed_roles = []
