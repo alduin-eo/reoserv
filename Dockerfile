@@ -1,4 +1,4 @@
-FROM rust:alpine3.23@sha256:4fec02de605563c297c78a31064c8335bc004fa2b0bf406b1b99441da64e2d2d AS chef
+FROM rust:alpine3.23@sha256:66f48b19d6e88519e2e58bebe0d945779a6a4ca41c2db17db78c9569655b50ac AS chef
 WORKDIR /app
 RUN apk add --no-cache musl-dev openssl-dev && \
     cargo install --locked cargo-chef
