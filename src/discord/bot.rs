@@ -892,9 +892,10 @@ async fn cmd_give(
             let capped = cmp::min(max_item - current, amount);
             actual_given = capped;
             if capped > 0
-                && let Ok(map) = state.world.get_map(map_id).await {
-                    map.give_item(player_id, alduin_item_id, capped);
-                }
+                && let Ok(map) = state.world.get_map(map_id).await
+            {
+                map.give_item(player_id, alduin_item_id, capped);
+            }
             let balance = current + actual_given;
             let notify_packet = AlduinReplyServerPacket {
                 reply: AlduinReply::Notify,
@@ -1059,9 +1060,10 @@ async fn cmd_take(
             let capped = cmp::min(amount, current);
             actual_taken = capped;
             if capped > 0
-                && let Ok(map) = state.world.get_map(map_id).await {
-                    map.lose_item(player_id, alduin_item_id, capped);
-                }
+                && let Ok(map) = state.world.get_map(map_id).await
+            {
+                map.lose_item(player_id, alduin_item_id, capped);
+            }
             let balance = current - actual_taken;
             let notify_packet = AlduinReplyServerPacket {
                 reply: AlduinReply::Notify,
