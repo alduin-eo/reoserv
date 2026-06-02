@@ -3,3 +3,4 @@
 eo-client/
 target/
 .env
+compose.yml

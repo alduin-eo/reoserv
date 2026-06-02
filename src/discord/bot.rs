@@ -1171,12 +1171,10 @@ async fn cmd_leaderboard(
         "**Alduin Leaderboard — Page {}** ({}):",
         page, timestamp
     )];
-    let mut rank = offset + 1;
-    for row in &rows {
+    for (rank, row) in (offset + 1..).zip(rows.iter()) {
         let name = row.get_string(0).unwrap_or_default();
         let total = row.get_int(1).unwrap_or(0);
         lines.push(format!("{}. {} — {}", rank, name, total));
-        rank += 1;
     }
 
     let _ = cmd
