@@ -34,10 +34,9 @@ async fn queue(db: &DbHandle, command: &str, arg: &str, admin_name: &str) -> any
 
 async fn status(db: &DbHandle, player: &PlayerHandle) -> anyhow::Result<()> {
     let manager = db
-        .query_one(&insert_params(
+        .query_one(
             "SELECT `desired`, `paused`, `heartbeat`, `summary` FROM `bot_manager` WHERE `id` = 1",
-            &[],
-        ))
+        )
         .await?;
     let Some(manager) = manager else {
         reply(player, "Bot manager has never run.");
@@ -47,10 +46,7 @@ async fn status(db: &DbHandle, player: &PlayerHandle) -> anyhow::Result<()> {
         .get_date(2)
         .map(|hb| (chrono::Utc::now().naive_utc() - hb).num_seconds());
     let online = db
-        .query_int(&insert_params(
-            "SELECT COUNT(1) FROM `bot_status` WHERE `online` = 1",
-            &[],
-        ))
+        .query_int("SELECT COUNT(1) FROM `bot_status` WHERE `online` = 1")
         .await?
         .unwrap_or(0);
     let state = match age {
@@ -82,11 +78,10 @@ async fn status(db: &DbHandle, player: &PlayerHandle) -> anyhow::Result<()> {
 
 async fn list(db: &DbHandle, player: &PlayerHandle) -> anyhow::Result<()> {
     let rows = db
-        .query(&insert_params(
+        .query(
             "SELECT `character_name`, `level`, `personality`, `activity` FROM `bot_status` \
              WHERE `online` = 1 ORDER BY `level` DESC, `character_name` LIMIT 20",
-            &[],
-        ))
+        )
         .await?;
     if rows.is_empty() {
         reply(player, "No bots online.");
