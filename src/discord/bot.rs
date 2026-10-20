@@ -818,7 +818,9 @@ async fn cmd_give(
     let char_row = state
         .db
         .query_one(&insert_params(
-            "SELECT id FROM characters WHERE name = :name",
+            // bots (accounts.is_bot) never receive Alduin
+            "SELECT c.id FROM characters c JOIN accounts a ON a.id = c.account_id \
+             WHERE c.name = :name AND a.is_bot = 0",
             &[("name", &name)],
         ))
         .await
@@ -1145,6 +1147,7 @@ async fn cmd_leaderboard(
         .query(&insert_params(
             "SELECT c.name, COALESCE(SUM(ci.quantity), 0) AS total \
              FROM characters c \
+             JOIN accounts a ON a.id = c.account_id AND a.is_bot = 0 \
              LEFT JOIN character_inventory ci ON ci.character_id = c.id AND ci.item_id = :item_id \
              GROUP BY c.id, c.name \
              ORDER BY total DESC \
