@@ -242,9 +242,9 @@ mod tests {
 
     #[test]
     fn reads_do_not_trigger_map_reload() {
-        assert!(!is_map_content_change(&EventKind::Access(AccessKind::Open(
-            AccessMode::Any
-        ))));
+        assert!(!is_map_content_change(&EventKind::Access(
+            AccessKind::Open(AccessMode::Any)
+        )));
         assert!(!is_map_content_change(&EventKind::Access(
             AccessKind::Close(AccessMode::Read)
         )));

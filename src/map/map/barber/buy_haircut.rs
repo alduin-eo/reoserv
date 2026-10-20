@@ -23,18 +23,22 @@ impl Map {
         hair_style: i32,
         hair_color: i32,
     ) {
+        let character = match self.characters.get(&player_id) {
+            Some(character) => character,
+            None => return,
+        };
+
         if hair_style < 0
-            || hair_style > SETTINGS.load().character.max_hair_style
+            || hair_style
+                > SETTINGS
+                    .load()
+                    .character
+                    .max_hair_style_for(character.gender)
             || hair_color < 0
             || hair_color > SETTINGS.load().character.max_hair_color
         {
             return;
         }
-
-        let character = match self.characters.get(&player_id) {
-            Some(character) => character,
-            None => return,
-        };
 
         let npc = match self.npcs.iter().find(|npc| npc.index == npc_index) {
             Some(npc) => npc,

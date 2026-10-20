@@ -74,7 +74,11 @@ impl Map {
                 }
                 "hairstyle" => {
                     if let Ok(hair_style) = value.parse::<i32>()
-                        && (0..=SETTINGS.load().character.max_hair_style).contains(&hair_style)
+                        && (0..=SETTINGS
+                            .load()
+                            .character
+                            .max_hair_style_for(character.gender))
+                            .contains(&hair_style)
                         && character.hair_style != hair_style
                     {
                         character.hair_style = hair_style;

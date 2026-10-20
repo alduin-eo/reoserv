@@ -50,7 +50,7 @@ impl Player {
         if create.hair_color < 0
             || create.hair_color > SETTINGS.load().character.max_hair_color
             || create.hair_style < 0
-            || create.hair_style > SETTINGS.load().character.max_hair_style
+            || create.hair_style > SETTINGS.load().character.max_hair_style_for(create.gender)
         {
             return;
         }
