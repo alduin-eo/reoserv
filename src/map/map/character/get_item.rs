@@ -30,6 +30,11 @@ impl Map {
             None => return,
         };
 
+        // Alduin tokens are real-money items: bots may not collect them.
+        if character.is_bot && item_id == SETTINGS.load().alduin.alduin_item_id {
+            return;
+        }
+
         let distance = get_distance(&item_coords, &character.coords);
         if distance > SETTINGS.load().world.drop_distance {
             return;

@@ -70,6 +70,7 @@ impl Player {
         self.character_name = Some(character.name.clone());
         self.guild_tag = character.guild_tag.clone();
         character.player_id = Some(self.id);
+        character.is_bot = self.is_bot;
         character.player = Some(player);
         character.usage_ticks = SETTINGS.load().world.usage_rate;
 
