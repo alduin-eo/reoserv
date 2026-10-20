@@ -298,22 +298,16 @@ async fn main() -> anyhow::Result<()> {
             let ip = addr.ip().to_string();
             let now = Utc::now();
 
-            let player_count = match server_world
-                .get_connection_count()
-                .await {
-
+            let player_count = match server_world.get_connection_count().await {
                 Ok(value) => value,
 
                 Err(e) => {
-
                     // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                     tracing::warn!("{}: dropping connection from {}", e, addr);
 
                     continue;
-
                 }
-
             };
             if player_count >= SETTINGS.load().server.max_connections {
                 tracing::warn!("{} has been disconnected because the server is full", addr);
@@ -344,22 +338,16 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let num_of_connections = match server_world
-                .get_ip_connection_count(&ip)
-                .await {
-
+            let num_of_connections = match server_world.get_ip_connection_count(&ip).await {
                 Ok(value) => value,
 
                 Err(e) => {
-
                     // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                     tracing::warn!("{}: dropping connection from {}", e, addr);
 
                     continue;
-
                 }
-
             };
             if SETTINGS.load().server.max_connections_per_ip != 0
                 && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
@@ -373,40 +361,28 @@ async fn main() -> anyhow::Result<()> {
                 continue;
             }
 
-            match server_world
-                .add_connection(&ip)
-                .await {
-
+            match server_world.add_connection(&ip).await {
                 Ok(value) => value,
 
                 Err(e) => {
-
                     // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                     tracing::warn!("{}: dropping connection from {}", e, addr);
 
                     continue;
-
                 }
-
             };
 
-            let player_id = match server_world
-                .get_next_player_id()
-                .await {
-
+            let player_id = match server_world.get_next_player_id().await {
                 Ok(value) => value,
 
                 Err(e) => {
-
                     // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                     tracing::warn!("{}: dropping connection from {}", e, addr);
 
                     continue;
-
                 }
-
             };
 
             let player = PlayerHandle::new(
@@ -417,9 +393,7 @@ async fn main() -> anyhow::Result<()> {
                 server_world.clone(),
                 server_db.clone(),
             );
-            match server_world
-                .add_player(player_id, player)
-                .await {
+            match server_world.add_player(player_id, player).await {
                 Ok(value) => value,
                 Err(e) => {
                     // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
@@ -431,10 +405,7 @@ async fn main() -> anyhow::Result<()> {
             tracing::info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                server_world
-                    .get_connection_count()
-                    .await
-                    .unwrap_or(-1),
+                server_world.get_connection_count().await.unwrap_or(-1),
                 SETTINGS.load().server.max_connections
             );
         }
@@ -456,22 +427,16 @@ async fn main() -> anyhow::Result<()> {
                 let ip = addr.ip().to_string();
                 let now = Utc::now();
 
-                let player_count = match websocket_world
-                    .get_connection_count()
-                    .await {
-
+                let player_count = match websocket_world.get_connection_count().await {
                     Ok(value) => value,
 
                     Err(e) => {
-
                         // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                         tracing::warn!("{}: dropping connection from {}", e, addr);
 
                         continue;
-
                     }
-
                 };
                 if player_count >= SETTINGS.load().server.max_connections {
                     tracing::warn!("{} has been disconnected because the server is full", addr);
@@ -502,22 +467,16 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
 
-                let num_of_connections = match websocket_world
-                    .get_ip_connection_count(&ip)
-                    .await {
-
+                let num_of_connections = match websocket_world.get_ip_connection_count(&ip).await {
                     Ok(value) => value,
 
                     Err(e) => {
-
                         // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                         tracing::warn!("{}: dropping connection from {}", e, addr);
 
                         continue;
-
                     }
-
                 };
                 if SETTINGS.load().server.max_connections_per_ip != 0
                     && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
@@ -531,40 +490,28 @@ async fn main() -> anyhow::Result<()> {
                     continue;
                 }
 
-                match websocket_world
-                    .add_connection(&ip)
-                    .await {
-
+                match websocket_world.add_connection(&ip).await {
                     Ok(value) => value,
 
                     Err(e) => {
-
                         // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                         tracing::warn!("{}: dropping connection from {}", e, addr);
 
                         continue;
-
                     }
-
                 };
 
-                let player_id = match websocket_world
-                    .get_next_player_id()
-                    .await {
-
+                let player_id = match websocket_world.get_next_player_id().await {
                     Ok(value) => value,
 
                     Err(e) => {
-
                         // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
 
                         tracing::warn!("{}: dropping connection from {}", e, addr);
 
                         continue;
-
                     }
-
                 };
 
                 let player = PlayerHandle::new(
@@ -575,9 +522,7 @@ async fn main() -> anyhow::Result<()> {
                     websocket_world.clone(),
                     db.clone(),
                 );
-                match websocket_world
-                    .add_player(player_id, player)
-                    .await {
+                match websocket_world.add_player(player_id, player).await {
                     Ok(value) => value,
                     Err(e) => {
                         // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
@@ -589,10 +534,7 @@ async fn main() -> anyhow::Result<()> {
                 tracing::info!(
                     "websocket connection accepted ({}) {}/{}",
                     addr,
-                    websocket_world
-                        .get_connection_count()
-                        .await
-                        .unwrap_or(-1),
+                    websocket_world.get_connection_count().await.unwrap_or(-1),
                     SETTINGS.load().server.max_connections
                 );
             }

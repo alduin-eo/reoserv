@@ -396,7 +396,7 @@ impl WorldHandle {
     }
 
     pub fn bots_command(&self, player_id: i32, admin_name: String, args: Vec<String>) {
-        let _ = self.tx.send(Command::BotsCommand {
+        let _ = self.tx.send(Command::Bots {
             player_id,
             admin_name,
             args,

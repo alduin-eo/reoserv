@@ -384,7 +384,7 @@ impl World {
                 victim_name,
             } => self.request_player_info(player_id, victim_name),
 
-            Command::BotsCommand {
+            Command::Bots {
                 player_id,
                 admin_name,
                 args,
