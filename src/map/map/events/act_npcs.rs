@@ -299,10 +299,8 @@ impl Map {
         act_ticks: i32,
     ) -> Option<NpcUpdatePosition> {
         let (walk_idle_for, has_opponent) = {
-            match self.npcs.iter().find(|npc| npc.index == index) {
-                Some(npc) => (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty()),
-                None => return None,
-            }
+            let npc = self.npcs.iter().find(|npc| npc.index == index)?;
+            (npc.walk_idle_for.unwrap_or(0), !npc.opponents.is_empty())
         };
 
         let idle_rate = act_rate + walk_idle_for;
