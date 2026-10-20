@@ -249,7 +249,11 @@ impl Map {
             });
         }
 
-        let drop = get_drop(killer_player_id, npc_id, &npc_coords);
+        let killer_is_bot = self
+            .characters
+            .get(&killer_player_id)
+            .is_some_and(|character| character.is_bot);
+        let drop = get_drop(killer_player_id, killer_is_bot, npc_id, &npc_coords);
 
         let (drop_index, drop_item_id, drop_amount) = match drop {
             Some(drop) => {
@@ -560,12 +564,23 @@ impl Map {
     }
 }
 
-fn get_drop(target_player_id: i32, npc_id: i32, npc_coords: &Coords) -> Option<Item> {
+fn get_drop(
+    target_player_id: i32,
+    target_is_bot: bool,
+    npc_id: i32,
+    npc_coords: &Coords,
+) -> Option<Item> {
     let global_drops = GLOBAL_DROPS.load();
     let drop_db = DROP_DB.load();
     let mut drops = global_drops.drops.iter().collect::<Vec<_>>();
     if let Some(drop_npc) = drop_db.npcs.iter().find(|d| d.npc_id == npc_id) {
         drops.extend(drop_npc.drops.iter());
+    }
+
+    // Bots never get Alduin tokens (real-money items) from their kills.
+    if target_is_bot {
+        let alduin_item_id = SETTINGS.load().alduin.alduin_item_id;
+        drops.retain(|drop| drop.item_id != alduin_item_id);
     }
 
     if !drops.is_empty() {

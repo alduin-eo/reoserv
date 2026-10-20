@@ -7,7 +7,10 @@ use std::{
 
 use arc_swap::ArcSwap;
 use config::ConfigError;
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{
+    Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher,
+    event::{AccessKind, AccessMode, ModifyKind},
+};
 use once_cell::sync::Lazy;
 use tokio::sync::mpsc;
 
@@ -180,13 +183,18 @@ pub fn spawn_map_watcher(world: WorldHandle) {
         loop {
             tokio::select! {
                 Some(event) = rx.recv() => {
+                    // Ignore reads (including reload_map's own open of the file),
+                    // otherwise every reload would schedule another one forever.
+                    if !is_map_content_change(&event.kind) {
+                        continue;
+                    }
                     for path in &event.paths {
                         if path.extension().is_some_and(|e| e == "emf")
                             && let Some(map_id) = extract_map_id(path) {
                                 pending_maps.insert(map_id);
+                                last_event = Some(Instant::now());
                             }
                     }
-                    last_event = Some(Instant::now());
                 }
                 _ = debounce_timer.tick() => {
                     if let Some(last) = last_event
@@ -211,4 +219,63 @@ fn extract_map_id(path: &Path) -> Option<i32> {
         return None;
     }
     numeric.parse::<i32>().ok()
+}
+
+/// True for events that can change a map file's contents: creation, data
+/// writes, renames into place (editors that save via a temp file) and a
+/// writer closing the file. Opens/reads and metadata-only changes are ignored.
+fn is_map_content_change(kind: &EventKind) -> bool {
+    match kind {
+        EventKind::Create(_) => true,
+        EventKind::Modify(ModifyKind::Metadata(_)) => false,
+        EventKind::Modify(_) => true,
+        EventKind::Access(AccessKind::Close(AccessMode::Write)) => true,
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use notify::event::{CreateKind, DataChange, MetadataKind, RemoveKind, RenameMode};
+
+    use super::*;
+
+    #[test]
+    fn reads_do_not_trigger_map_reload() {
+        assert!(!is_map_content_change(&EventKind::Access(
+            AccessKind::Open(AccessMode::Any)
+        )));
+        assert!(!is_map_content_change(&EventKind::Access(
+            AccessKind::Close(AccessMode::Read)
+        )));
+        assert!(!is_map_content_change(&EventKind::Access(AccessKind::Read)));
+    }
+
+    #[test]
+    fn metadata_and_removal_do_not_trigger_map_reload() {
+        assert!(!is_map_content_change(&EventKind::Modify(
+            ModifyKind::Metadata(MetadataKind::Any)
+        )));
+        assert!(!is_map_content_change(&EventKind::Remove(RemoveKind::File)));
+    }
+
+    #[test]
+    fn writes_trigger_map_reload() {
+        assert!(is_map_content_change(&EventKind::Create(CreateKind::File)));
+        assert!(is_map_content_change(&EventKind::Modify(ModifyKind::Data(
+            DataChange::Any
+        ))));
+        assert!(is_map_content_change(&EventKind::Modify(ModifyKind::Name(
+            RenameMode::To
+        ))));
+        assert!(is_map_content_change(&EventKind::Access(
+            AccessKind::Close(AccessMode::Write)
+        )));
+    }
+
+    #[test]
+    fn extracts_map_id_from_file_name() {
+        assert_eq!(extract_map_id(Path::new("data/maps/00042.emf")), Some(42));
+        assert_eq!(extract_map_id(Path::new("data/maps/readme.emf")), None);
+    }
 }

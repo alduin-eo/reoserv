@@ -164,6 +164,11 @@ pub enum Command {
         player_id: i32,
         victim_name: String,
     },
+    Bots {
+        player_id: i32,
+        admin_name: String,
+        args: Vec<String>,
+    },
     RequestPlayerList {
         player_id: i32,
     },

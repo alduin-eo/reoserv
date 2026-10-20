@@ -19,6 +19,8 @@ pub struct Player {
     pub world: WorldHandle,
     pub map: Option<MapHandle>,
     account_id: i32,
+    /// Account is an autonomous test bot (accounts.is_bot); refused real-money features.
+    is_bot: bool,
     db: crate::db::DbHandle,
     pub state: ClientState,
     ip: String,
@@ -94,6 +96,7 @@ impl Player {
             map: None,
             closed: false,
             account_id: 0,
+            is_bot: false,
             state: ClientState::Uninitialized,
             login_attempts: 0,
             ip,

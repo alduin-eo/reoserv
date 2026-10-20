@@ -298,10 +298,17 @@ async fn main() -> anyhow::Result<()> {
             let ip = addr.ip().to_string();
             let now = Utc::now();
 
-            let player_count = server_world
-                .get_connection_count()
-                .await
-                .expect("Failed to get connection count. Timeout");
+            let player_count = match server_world.get_connection_count().await {
+                Ok(value) => value,
+
+                Err(e) => {
+                    // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                    tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                    continue;
+                }
+            };
             if player_count >= SETTINGS.load().server.max_connections {
                 tracing::warn!("{} has been disconnected because the server is full", addr);
                 continue;
@@ -331,10 +338,17 @@ async fn main() -> anyhow::Result<()> {
                 }
             }
 
-            let num_of_connections = server_world
-                .get_ip_connection_count(&ip)
-                .await
-                .expect("Failed to get IP connection count. Timeout");
+            let num_of_connections = match server_world.get_ip_connection_count(&ip).await {
+                Ok(value) => value,
+
+                Err(e) => {
+                    // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                    tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                    continue;
+                }
+            };
             if SETTINGS.load().server.max_connections_per_ip != 0
                 && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
             {
@@ -347,15 +361,29 @@ async fn main() -> anyhow::Result<()> {
                 continue;
             }
 
-            server_world
-                .add_connection(&ip)
-                .await
-                .expect("Failed to add connection. Timeout");
+            match server_world.add_connection(&ip).await {
+                Ok(value) => value,
 
-            let player_id = server_world
-                .get_next_player_id()
-                .await
-                .expect("Failed to get next player id. Timeout");
+                Err(e) => {
+                    // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                    tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                    continue;
+                }
+            };
+
+            let player_id = match server_world.get_next_player_id().await {
+                Ok(value) => value,
+
+                Err(e) => {
+                    // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                    tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                    continue;
+                }
+            };
 
             let player = PlayerHandle::new(
                 player_id,
@@ -365,18 +393,19 @@ async fn main() -> anyhow::Result<()> {
                 server_world.clone(),
                 server_db.clone(),
             );
-            server_world
-                .add_player(player_id, player)
-                .await
-                .expect("Failed to add player. Timeout");
+            match server_world.add_player(player_id, player).await {
+                Ok(value) => value,
+                Err(e) => {
+                    // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+                    tracing::warn!("{}: dropping connection from {}", e, addr);
+                    continue;
+                }
+            };
 
             tracing::info!(
                 "connection accepted ({}) {}/{}",
                 addr,
-                server_world
-                    .get_connection_count()
-                    .await
-                    .expect("Failed to get connection count. Timeout"),
+                server_world.get_connection_count().await.unwrap_or(-1),
                 SETTINGS.load().server.max_connections
             );
         }
@@ -398,10 +427,17 @@ async fn main() -> anyhow::Result<()> {
                 let ip = addr.ip().to_string();
                 let now = Utc::now();
 
-                let player_count = websocket_world
-                    .get_connection_count()
-                    .await
-                    .expect("Failed to get connection count. Timeout");
+                let player_count = match websocket_world.get_connection_count().await {
+                    Ok(value) => value,
+
+                    Err(e) => {
+                        // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                        tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                        continue;
+                    }
+                };
                 if player_count >= SETTINGS.load().server.max_connections {
                     tracing::warn!("{} has been disconnected because the server is full", addr);
                     continue;
@@ -431,10 +467,17 @@ async fn main() -> anyhow::Result<()> {
                     }
                 }
 
-                let num_of_connections = websocket_world
-                    .get_ip_connection_count(&ip)
-                    .await
-                    .expect("Failed to get IP connection count. Timeout");
+                let num_of_connections = match websocket_world.get_ip_connection_count(&ip).await {
+                    Ok(value) => value,
+
+                    Err(e) => {
+                        // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                        tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                        continue;
+                    }
+                };
                 if SETTINGS.load().server.max_connections_per_ip != 0
                     && num_of_connections >= SETTINGS.load().server.max_connections_per_ip
                 {
@@ -447,15 +490,29 @@ async fn main() -> anyhow::Result<()> {
                     continue;
                 }
 
-                websocket_world
-                    .add_connection(&ip)
-                    .await
-                    .expect("Failed to add connection. Timeout");
+                match websocket_world.add_connection(&ip).await {
+                    Ok(value) => value,
 
-                let player_id = websocket_world
-                    .get_next_player_id()
-                    .await
-                    .expect("Failed to get next player id. Timeout");
+                    Err(e) => {
+                        // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                        tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                        continue;
+                    }
+                };
+
+                let player_id = match websocket_world.get_next_player_id().await {
+                    Ok(value) => value,
+
+                    Err(e) => {
+                        // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+
+                        tracing::warn!("{}: dropping connection from {}", e, addr);
+
+                        continue;
+                    }
+                };
 
                 let player = PlayerHandle::new(
                     player_id,
@@ -465,18 +522,19 @@ async fn main() -> anyhow::Result<()> {
                     websocket_world.clone(),
                     db.clone(),
                 );
-                websocket_world
-                    .add_player(player_id, player)
-                    .await
-                    .expect("Failed to add player. Timeout");
+                match websocket_world.add_player(player_id, player).await {
+                    Ok(value) => value,
+                    Err(e) => {
+                        // the world can be busy for a moment (e.g. saving); drop this connection, keep the server up
+                        tracing::warn!("{}: dropping connection from {}", e, addr);
+                        continue;
+                    }
+                };
 
                 tracing::info!(
                     "websocket connection accepted ({}) {}/{}",
                     addr,
-                    websocket_world
-                        .get_connection_count()
-                        .await
-                        .expect("Failed to get connection count. Timeout"),
+                    websocket_world.get_connection_count().await.unwrap_or(-1),
                     SETTINGS.load().server.max_connections
                 );
             }

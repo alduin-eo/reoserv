@@ -301,7 +301,7 @@ impl World {
 
             Command::ReloadMap { map_id } => self.reload_map(map_id).await,
 
-            Command::Save => self.save_async().await,
+            Command::Save => self.save_in_background(),
 
             Command::SendAdminMessage { player_id, message } => {
                 self.send_admin_message(player_id, message).await
@@ -383,6 +383,12 @@ impl World {
                 player_id,
                 victim_name,
             } => self.request_player_info(player_id, victim_name),
+
+            Command::Bots {
+                player_id,
+                admin_name,
+                args,
+            } => self.bots_command(player_id, admin_name, args),
 
             Command::RequestPlayerInventory {
                 player_id,

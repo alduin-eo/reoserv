@@ -1,4 +1,5 @@
 use config::{Config, ConfigError, File};
+use eolib::protocol::Gender;
 
 #[derive(Debug, Deserialize)]
 pub struct Server {
@@ -218,6 +219,21 @@ pub struct Character {
     pub max_hair_color: i32,
     #[serde(default = "default_character_max_hair_style")]
     pub max_hair_style: i32,
+    /// Optional lower cap for female characters (e.g. when extra hairstyles such as
+    /// bearded ones only exist in the male hair graphics). Defaults to `max_hair_style`.
+    #[serde(default)]
+    pub max_female_hair_style: Option<i32>,
+}
+
+impl Character {
+    pub fn max_hair_style_for(&self, gender: Gender) -> i32 {
+        match gender {
+            Gender::Female => self
+                .max_female_hair_style
+                .map_or(self.max_hair_style, |max| max.min(self.max_hair_style)),
+            _ => self.max_hair_style,
+        }
+    }
 }
 
 fn default_character_min_name_length() -> usize {
@@ -248,6 +264,7 @@ impl Default for Character {
             max_skin: default_character_max_skin(),
             max_hair_color: default_character_max_hair_color(),
             max_hair_style: default_character_max_hair_style(),
+            max_female_hair_style: None,
         }
     }
 }
@@ -1429,5 +1446,35 @@ impl Settings {
 
     pub fn reload() -> Result<Self, ConfigError> {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn female_hair_style_cap_defaults_to_max_hair_style() {
+        let character = Character::default();
+        assert_eq!(character.max_hair_style_for(Gender::Male), 20);
+        assert_eq!(character.max_hair_style_for(Gender::Female), 20);
+    }
+
+    #[test]
+    fn female_hair_style_cap_never_exceeds_max_hair_style() {
+        let character = Character {
+            max_hair_style: 70,
+            max_female_hair_style: Some(20),
+            ..Character::default()
+        };
+        assert_eq!(character.max_hair_style_for(Gender::Male), 70);
+        assert_eq!(character.max_hair_style_for(Gender::Female), 20);
+
+        let character = Character {
+            max_hair_style: 20,
+            max_female_hair_style: Some(30),
+            ..Character::default()
+        };
+        assert_eq!(character.max_hair_style_for(Gender::Female), 20);
     }
 }

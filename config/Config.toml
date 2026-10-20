@@ -250,6 +250,10 @@ max_skin = 11
 
 max_hair_style = 20
 
+# Optional lower hair style cap for female characters, for hairstyles that only
+# exist in the male hair graphics (e.g. bearded styles). Defaults to max_hair_style.
+# max_female_hair_style = 20
+
 max_hair_color = 9
 
 [npcs]

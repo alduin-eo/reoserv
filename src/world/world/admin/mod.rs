@@ -1,4 +1,5 @@
 mod ban_player;
+mod bots_command;
 mod free_player;
 mod freeze_player;
 mod jail_player;

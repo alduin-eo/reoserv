@@ -319,6 +319,25 @@
             ]
         ),
         (
+            name: "bots",
+            alias: "bots",
+            description: "Manage autonomous player bots",
+            usage: "$bots on 25 | off | add 10 | remove 5 | status | list | inspect Name | pause | resume",
+            admin_level: "HighGameMaster",
+            args: [
+                (
+                    name: "action",
+                    type: "String",
+                    required: true,
+                ),
+                (
+                    name: "value",
+                    type: "String",
+                    required: false,
+                )
+            ]
+        ),
+        (
             name: "captcha",
             alias: "c",
             description: "Show a captcha to a player",
