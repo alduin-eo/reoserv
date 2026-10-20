@@ -9,6 +9,19 @@ impl Character {
         &self,
         db: &DbHandle,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        let _guard = db.lock_transactions().await;
+        let result = self.update_in_transaction(db).await;
+        if result.is_err() {
+            // Never leave a half-finished transaction open on the shared connection.
+            let _ = db.rollback_transaction().await;
+        }
+        result
+    }
+
+    async fn update_in_transaction(
+        &self,
+        db: &DbHandle,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let old_items = db
             .query_map(
                 &insert_params(

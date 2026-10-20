@@ -1,10 +1,18 @@
-use tokio::sync::mpsc::{self, UnboundedSender};
+use std::sync::Arc;
+
+use tokio::sync::{
+    Mutex, OwnedMutexGuard,
+    mpsc::{self, UnboundedSender},
+};
 
 use super::{Command, Connection, Db, IntoDbRequest};
 
 #[derive(Debug, Clone)]
 pub struct DbHandle {
     tx: UnboundedSender<Command>,
+    // All maps share this one connection, so transactions must not interleave:
+    // a second START TRANSACTION would implicitly commit the first one.
+    transaction_lock: Arc<Mutex<()>>,
 }
 
 impl DbHandle {
@@ -12,7 +20,15 @@ impl DbHandle {
         let (tx, rx) = mpsc::unbounded_channel();
         let db = Db::new(rx, connection);
         tokio::spawn(run_db(db));
-        Self { tx }
+        Self {
+            tx,
+            transaction_lock: Arc::new(Mutex::new(())),
+        }
+    }
+
+    /// Hold the returned guard from start_transaction until commit/rollback.
+    pub async fn lock_transactions(&self) -> OwnedMutexGuard<()> {
+        self.transaction_lock.clone().lock_owned().await
     }
 
     pub async fn execute<Q>(&self, query: &Q) -> anyhow::Result<()>
@@ -106,7 +122,6 @@ impl DbHandle {
         resp_rx.await.ok().flatten()
     }
 
-    #[allow(dead_code)]
     pub async fn rollback_transaction(&self) -> anyhow::Result<()> {
         let (resp_tx, resp_rx) = tokio::sync::oneshot::channel();
         let _ = self.tx.send(Command::RollbackTransaction(resp_tx));
@@ -119,5 +134,40 @@ async fn run_db(mut db: Db) {
         if let Some(command) = db.rx.recv().await {
             db.handle_command(command).await;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    async fn save(db: DbHandle, id: i32) -> anyhow::Result<()> {
+        let _guard = db.lock_transactions().await;
+        db.start_transaction().await?;
+        db.execute(&format!("INSERT INTO test (id) VALUES ({})", id))
+            .await?;
+        tokio::task::yield_now().await;
+        db.execute(&format!("INSERT INTO test (id) VALUES ({})", id + 1000))
+            .await?;
+        db.commit_transaction().await
+    }
+
+    #[tokio::test]
+    async fn test_concurrent_transactions_do_not_interleave() {
+        let connection = Connection::Sqlite(rusqlite::Connection::open_in_memory().unwrap());
+        let db = DbHandle::new(connection);
+        db.execute("CREATE TABLE test (id INTEGER PRIMARY KEY)")
+            .await
+            .unwrap();
+
+        let tasks: Vec<_> = (1..=8)
+            .map(|id| tokio::spawn(save(db.clone(), id)))
+            .collect();
+        for task in tasks {
+            task.await.unwrap().unwrap();
+        }
+
+        let count = db.query_int("SELECT COUNT(1) FROM test").await.unwrap();
+        assert_eq!(count, Some(16));
     }
 }
