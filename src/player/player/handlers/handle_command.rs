@@ -422,6 +422,11 @@ pub async fn handle_command(
                     }
                     "global" => world.toggle_global(character.name.to_owned()),
                     "remap" => world.reload_map(character.map_id),
+                    "bots" => world.bots_command(
+                        character.player_id.unwrap(),
+                        character.name.to_owned(),
+                        args.to_owned(),
+                    ),
                     "captcha" => {
                         world.show_captcha(args[0].to_owned(), args[1].parse::<i32>().unwrap())
                     }

@@ -246,6 +246,18 @@ impl Player {
         };
 
         self.account_id = account_id;
+        // Flag autonomous test bots (all login paths end here); refused real-money features.
+        self.is_bot = self
+            .db
+            .query_int(&insert_params(
+                "SELECT `is_bot` FROM `accounts` WHERE `id` = :id",
+                &[("id", &account_id)],
+            ))
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0)
+            != 0;
         self.record_action(Action::AccountLoggedIn);
         self.world.add_logged_in_account(account_id);
         self.state = ClientState::LoggedIn;

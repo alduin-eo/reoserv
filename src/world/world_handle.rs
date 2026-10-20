@@ -395,6 +395,14 @@ impl WorldHandle {
         });
     }
 
+    pub fn bots_command(&self, player_id: i32, admin_name: String, args: Vec<String>) {
+        let _ = self.tx.send(Command::BotsCommand {
+            player_id,
+            admin_name,
+            args,
+        });
+    }
+
     pub fn request_player_info(&self, player_id: i32, victim_name: String) {
         let _ = self.tx.send(Command::RequestPlayerInfo {
             player_id,

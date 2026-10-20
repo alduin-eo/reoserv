@@ -161,6 +161,12 @@ impl Player {
     }
 
     async fn alduin_add(&mut self, reader: EoReader) {
+        if self.is_bot {
+            // Bots never take part in the real-money Alduin wallet.
+            self.send_reply(AlduinReply::InvalidWalletAddress).await;
+            return;
+        }
+
         let packet = match AlduinAddClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {
@@ -288,6 +294,12 @@ impl Player {
     }
 
     async fn alduin_remove(&mut self, reader: EoReader) {
+        if self.is_bot {
+            // Bots never take part in the real-money Alduin wallet.
+            self.send_reply(AlduinReply::InvalidWalletAddress).await;
+            return;
+        }
+
         let packet = match AlduinRemoveClientPacket::deserialize(&reader) {
             Ok(packet) => packet,
             Err(e) => {

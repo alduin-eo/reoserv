@@ -384,6 +384,12 @@ impl World {
                 victim_name,
             } => self.request_player_info(player_id, victim_name),
 
+            Command::BotsCommand {
+                player_id,
+                admin_name,
+                args,
+            } => self.bots_command(player_id, admin_name, args),
+
             Command::RequestPlayerInventory {
                 player_id,
                 victim_name,
