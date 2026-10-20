@@ -139,6 +139,21 @@ async fn inspect(db: &DbHandle, player: &PlayerHandle, name: &str) -> anyhow::Re
         player,
         format!("Goal: {}", row.get_string(8).unwrap_or_default()),
     );
+    // recent decisions from the bot's persistent mind (saved by the bot manager every minute)
+    let mind = db
+        .query_string(&insert_params(
+            "SELECT `mind` FROM `bot_accounts` WHERE `account_name` = :account",
+            &[("account", &row.get_string(1).unwrap_or_default())],
+        ))
+        .await?;
+    let log: Vec<String> = mind
+        .and_then(|m| serde_json::from_str::<serde_json::Value>(&m).ok())
+        .and_then(|v| v.get("log").cloned())
+        .and_then(|l| serde_json::from_value(l).ok())
+        .unwrap_or_default();
+    for line in log.iter().rev().take(4).rev() {
+        reply(player, format!("Log: {}", line));
+    }
     Ok(())
 }
 
