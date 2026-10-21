@@ -128,6 +128,14 @@ pub enum Command {
     GetStartTime {
         respond_to: oneshot::Sender<i64>,
     },
+    /// Reserve an offline account for a staff edit; false if it is online or logging in.
+    LockAccountForAdmin {
+        account_id: i32,
+        respond_to: oneshot::Sender<bool>,
+    },
+    UnlockAccountForAdmin {
+        account_id: i32,
+    },
     IsLoggedIn {
         account_id: i32,
         respond_to: oneshot::Sender<bool>,

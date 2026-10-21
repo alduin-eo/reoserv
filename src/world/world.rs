@@ -13,6 +13,8 @@ pub struct World {
     players: HashMap<i32, PlayerHandle>,
     accounts: Vec<i32>,
     pending_logins: Vec<i32>,
+    /// accounts whose offline characters are being changed by staff (login waits until released)
+    admin_locked_accounts: Vec<i32>,
     characters: HashMap<String, i32>,
     guilds: HashMap<String, Vec<i32>>,
     db: crate::db::DbHandle,
@@ -56,6 +58,7 @@ impl World {
             players: HashMap::new(),
             accounts: Vec::new(),
             pending_logins: Vec::new(),
+            admin_locked_accounts: Vec::new(),
             characters: HashMap::new(),
             guilds: HashMap::new(),
             maps: None,
@@ -96,6 +99,21 @@ impl World {
                 self.accounts.push(account_id);
             }
 
+            Command::LockAccountForAdmin {
+                account_id,
+                respond_to,
+            } => {
+                let free = !self.accounts.contains(&account_id)
+                    && !self.pending_logins.contains(&account_id)
+                    && !self.admin_locked_accounts.contains(&account_id);
+                if free {
+                    self.admin_locked_accounts.push(account_id);
+                }
+                let _ = respond_to.send(free);
+            }
+            Command::UnlockAccountForAdmin { account_id } => {
+                self.admin_locked_accounts.retain(|id| *id != account_id);
+            }
             Command::AddPendingLogin { account_id } => {
                 self.pending_logins.push(account_id);
             }
@@ -252,7 +270,8 @@ impl World {
             } => {
                 let _ = respond_to.send(
                     self.accounts.contains(&account_id)
-                        || self.pending_logins.contains(&account_id),
+                        || self.pending_logins.contains(&account_id)
+                        || self.admin_locked_accounts.contains(&account_id),
                 );
             }
 

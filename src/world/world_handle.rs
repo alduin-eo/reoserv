@@ -319,6 +319,23 @@ impl WorldHandle {
             .map_err(|_| "Failed to get player party. Channel closed".to_string())
     }
 
+    /// Reserve an offline account for a staff edit (refused while it is online or logging in).
+    pub async fn lock_account_for_admin(&self, account_id: i32) -> Result<bool, String> {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.tx.send(Command::LockAccountForAdmin {
+            account_id,
+            respond_to: tx,
+        });
+        timeout(Duration::from_secs(1), rx)
+            .await
+            .map_err(|_| "Failed to lock account. Timeout".to_string())?
+            .map_err(|_| "Failed to lock account. Channel closed".to_string())
+    }
+
+    pub fn unlock_account_for_admin(&self, account_id: i32) {
+        let _ = self.tx.send(Command::UnlockAccountForAdmin { account_id });
+    }
+
     pub async fn is_logged_in(&self, account_id: i32) -> Result<bool, String> {
         let (tx, rx) = oneshot::channel();
         let _ = self.tx.send(Command::IsLoggedIn {

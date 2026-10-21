@@ -21,6 +21,8 @@ pub enum Command {
     },
     CancelTrade,
     Close(String),
+    SetMute(Option<Option<chrono::NaiveDateTime>>),
+    DeliverWarnings,
     ArenaDie {
         spawn_coords: Coords,
     },

@@ -4,7 +4,10 @@ use eolib::{
     protocol::net::{PacketAction, PacketFamily},
 };
 
-use crate::{SETTINGS, deep::FAMILY_CAPTCHA};
+use crate::{
+    SETTINGS,
+    deep::{FAMILY_CAPTCHA, FAMILY_MODERATION},
+};
 
 use super::{ClientState, Player};
 
@@ -23,6 +26,7 @@ impl Player {
         if let PacketFamily::Unrecognized(id) = family
             && id != 0xfe
             && id != FAMILY_CAPTCHA
+            && id != FAMILY_MODERATION
         {
             self.close("invalid packet family".to_string()).await;
             return;
@@ -83,6 +87,9 @@ impl Player {
             PacketFamily::Party => self.handle_party(action, reader),
             PacketFamily::PlayerRange => self.handle_player_range(action, reader),
             PacketFamily::Players => self.handle_players(action, reader),
+            PacketFamily::Unrecognized(FAMILY_MODERATION) if self.state == ClientState::InGame => {
+                self.handle_moderation(action, reader).await
+            }
             PacketFamily::Priest => self.handle_priest(action, reader),
             PacketFamily::Quest => self.handle_quest(action, reader),
             PacketFamily::Range => self.handle_range(action, reader),
@@ -91,7 +98,7 @@ impl Player {
             PacketFamily::Sit => self.handle_sit(action, reader),
             PacketFamily::Spell => self.handle_spell(action, reader),
             PacketFamily::StatSkill => self.handle_stat_skill(action, reader),
-            PacketFamily::Talk => self.handle_talk(action, reader),
+            PacketFamily::Talk => self.handle_talk(action, reader).await,
             PacketFamily::Trade => self.handle_trade(action, reader),
             PacketFamily::Walk => self.handle_walk(reader),
             PacketFamily::Warp => self.handle_warp(action, reader).await,

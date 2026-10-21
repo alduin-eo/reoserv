@@ -153,6 +153,10 @@ impl Player {
                 },
             )
             .await;
+
+        // Alduin moderation: server-side mute state and unacknowledged warnings
+        self.load_mute().await;
+        self.deliver_pending_warnings().await;
         true
     }
 }

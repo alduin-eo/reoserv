@@ -223,6 +223,25 @@ impl Player {
     }
 
     async fn finish_login(&mut self, account_id: i32, remember_me: bool) {
+        // Alduin maintenance mode (set from the admin panel): only staff accounts may log in
+        if maintenance_blocks(&self.db, account_id).await {
+            self.world.remove_pending_login(account_id);
+            let _ = self
+                .bus
+                .send(
+                    PacketAction::Reply,
+                    PacketFamily::Login,
+                    LoginReplyServerPacket {
+                        reply_code: LoginReply::Busy,
+                        reply_code_data: Some(LoginReplyServerPacketReplyCodeData::Busy(
+                            LoginReplyServerPacketReplyCodeDataBusy::new(),
+                        )),
+                    },
+                )
+                .await;
+            return;
+        }
+
         let session_token = if remember_me {
             match generate_session(&self.db, account_id).await {
                 Ok(token) => Some(token),
@@ -608,4 +627,28 @@ impl Player {
             _ => tracing::error!("Unhandled packet Login_{:?}", action),
         }
     }
+}
+
+/// Maintenance mode (server_flags.maintenance = 1) admits only accounts with a staff character.
+async fn maintenance_blocks(db: &crate::db::DbHandle, account_id: i32) -> bool {
+    let on = db
+        .query_one("SELECT `value` FROM `server_flags` WHERE `name` = 'maintenance'")
+        .await
+        .ok()
+        .flatten()
+        .and_then(|row| row.get_text(0))
+        .is_some_and(|v| v == "1");
+    if !on {
+        return false;
+    }
+    let staff = db
+            .query_int(&insert_params(
+                "SELECT COUNT(*) FROM `characters` WHERE `account_id` = :account_id AND `admin_level` > 0",
+                &[("account_id", &account_id)],
+            ))
+            .await
+            .ok()
+            .flatten()
+            .unwrap_or(0);
+    staff == 0
 }

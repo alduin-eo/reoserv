@@ -4,6 +4,8 @@ pub const ACTION_CONFIG: u8 = 220;
 pub const ACTION_SWAP: u8 = 35;
 pub const FAMILY_BOSS: u8 = 52;
 pub const FAMILY_CAPTCHA: u8 = 249;
+/// Alduin moderation: warnings and in-game reports (see moderation_packets.rs)
+pub const FAMILY_MODERATION: u8 = 56;
 pub const ACCOUNT_REPLY_WRONG_PIN: i32 = 8;
 pub const AVATAR_CHANGE_TYPE_SKIN: i32 = 4;
 pub const AVATAR_CHANGE_TYPE_GENDER: i32 = 5;
@@ -94,3 +96,9 @@ pub use lookup_type::LookupType;
 
 mod paperdoll_swap_server_packet;
 pub use paperdoll_swap_server_packet::PaperdollSwapServerPacket;
+
+mod moderation_packets;
+pub use moderation_packets::{
+    ReportPlayerClientPacket, ReportReplyServerPacket, WarningAcceptClientPacket,
+    WarningOpenServerPacket,
+};
