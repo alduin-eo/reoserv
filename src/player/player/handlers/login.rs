@@ -632,10 +632,7 @@ impl Player {
 /// Maintenance mode (server_flags.maintenance = 1) admits only accounts with a staff character.
 async fn maintenance_blocks(db: &crate::db::DbHandle, account_id: i32) -> bool {
     let on = db
-        .query_one(&insert_params(
-            "SELECT `value` FROM `server_flags` WHERE `name` = 'maintenance'",
-            &[],
-        ))
+        .query_one("SELECT `value` FROM `server_flags` WHERE `name` = 'maintenance'")
         .await
         .ok()
         .flatten()

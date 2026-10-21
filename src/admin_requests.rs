@@ -48,11 +48,10 @@ pub async fn run(db: DbHandle, world: WorldHandle) {
 
 async fn process_pending(db: &DbHandle, world: &WorldHandle) -> anyhow::Result<()> {
     let rows = db
-        .query(&insert_params(
+        .query(
             "SELECT `id`, `action`, `account_id`, `character_id`, `payload`, `requested_by` \
              FROM `admin_requests` WHERE `status` = 0 ORDER BY `id` LIMIT 20",
-            &[],
-        ))
+        )
         .await?;
     for row in rows {
         let request = Request {
@@ -709,11 +708,8 @@ async fn maintenance(db: &DbHandle, r: &Request) -> anyhow::Result<String> {
         .and_then(Value::as_bool)
         .unwrap_or(false);
     let value = if on { "1" } else { "0" };
-    db.execute(&insert_params(
-        "DELETE FROM `server_flags` WHERE `name` = 'maintenance'",
-        &[],
-    ))
-    .await?;
+    db.execute("DELETE FROM `server_flags` WHERE `name` = 'maintenance'")
+        .await?;
     db.execute(&insert_params(
         "INSERT INTO `server_flags` (`name`, `value`, `updated_by`) VALUES ('maintenance', :value, :by)",
         &[("value", &value), ("by", &r.by)],
