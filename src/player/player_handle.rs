@@ -58,6 +58,16 @@ impl PlayerHandle {
         let _ = self.tx.send(Command::Close(reason));
     }
 
+    /// Update the player's server-side mute (see Player::mute).
+    pub fn set_mute(&self, mute: Option<Option<chrono::NaiveDateTime>>) {
+        let _ = self.tx.send(Command::SetMute(mute));
+    }
+
+    /// Show any unacknowledged warnings now.
+    pub fn deliver_warnings(&self) {
+        let _ = self.tx.send(Command::DeliverWarnings);
+    }
+
     pub fn die(&self) {
         let _ = self.tx.send(Command::Die);
     }

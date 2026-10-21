@@ -20,6 +20,7 @@ use once_cell::sync::Lazy;
 
 #[macro_use]
 mod utils;
+mod admin_requests;
 mod arenas;
 mod character;
 mod config_watcher;
@@ -221,6 +222,15 @@ async fn main() -> anyhow::Result<()> {
             discord::start(discord_rx, bot_db, bot_world).await;
         });
         tracing::info!("Discord bot enabled");
+    }
+
+    // admin control panel requests (website → game server)
+    {
+        let admin_db = db.clone();
+        let admin_world = world.clone();
+        tokio::spawn(async move {
+            admin_requests::run(admin_db, admin_world).await;
+        });
     }
 
     let mut tick_interval = time::interval(Duration::from_millis(

@@ -74,7 +74,7 @@ impl Player {
         });
     }
 
-    fn talk_msg(&mut self, reader: EoReader) {
+    async fn talk_msg(&mut self, reader: EoReader) {
         let msg = match TalkMsgClientPacket::deserialize(&reader) {
             Ok(msg) => msg,
             Err(e) => {
@@ -82,6 +82,11 @@ impl Player {
                 return;
             }
         };
+
+        // server-side mute (Alduin moderation)
+        if self.chat_blocked().await {
+            return;
+        }
 
         let map = match &self.map {
             Some(map) => map.to_owned(),
@@ -103,7 +108,7 @@ impl Player {
         });
     }
 
-    fn talk_report(&mut self, reader: EoReader) {
+    async fn talk_report(&mut self, reader: EoReader) {
         let report = match TalkReportClientPacket::deserialize(&reader) {
             Ok(report) => report,
             Err(e) => {
@@ -111,6 +116,14 @@ impl Player {
                 return;
             }
         };
+
+        // server-side mute (Alduin moderation); $/# commands still work
+        if !report.message.starts_with('$')
+            && !report.message.starts_with('#')
+            && self.chat_blocked().await
+        {
+            return;
+        }
 
         let map = match &self.map {
             Some(map) => map.to_owned(),
@@ -174,7 +187,7 @@ impl Player {
         });
     }
 
-    fn talk_tell(&mut self, reader: EoReader) {
+    async fn talk_tell(&mut self, reader: EoReader) {
         let tell = match TalkTellClientPacket::deserialize(&reader) {
             Ok(tell) => tell,
             Err(e) => {
@@ -183,11 +196,16 @@ impl Player {
             }
         };
 
+        // server-side mute (Alduin moderation)
+        if self.chat_blocked().await {
+            return;
+        }
+
         self.world
             .send_private_message(self.id, tell.name, tell.message);
     }
 
-    fn talk_open(&mut self, reader: EoReader) {
+    async fn talk_open(&mut self, reader: EoReader) {
         let open = match TalkOpenClientPacket::deserialize(&reader) {
             Ok(open) => open,
             Err(e) => {
@@ -196,10 +214,15 @@ impl Player {
             }
         };
 
+        // server-side mute (Alduin moderation)
+        if self.chat_blocked().await {
+            return;
+        }
+
         self.world.broadcast_party_message(self.id, open.message);
     }
 
-    fn talk_request(&mut self, reader: EoReader) {
+    async fn talk_request(&mut self, reader: EoReader) {
         let request = match TalkRequestClientPacket::deserialize(&reader) {
             Ok(request) => request,
             Err(e) => {
@@ -207,6 +230,11 @@ impl Player {
                 return;
             }
         };
+
+        // server-side mute (Alduin moderation)
+        if self.chat_blocked().await {
+            return;
+        }
 
         let map = match &self.map {
             Some(map) => map.to_owned(),
@@ -241,15 +269,15 @@ impl Player {
         });
     }
 
-    pub fn handle_talk(&mut self, action: PacketAction, reader: EoReader) {
+    pub async fn handle_talk(&mut self, action: PacketAction, reader: EoReader) {
         match action {
             PacketAction::Admin => self.talk_admin(reader),
             PacketAction::Announce => self.talk_announce(reader),
-            PacketAction::Msg => self.talk_msg(reader),
-            PacketAction::Report => self.talk_report(reader),
-            PacketAction::Tell => self.talk_tell(reader),
-            PacketAction::Open => self.talk_open(reader),
-            PacketAction::Request => self.talk_request(reader),
+            PacketAction::Msg => self.talk_msg(reader).await,
+            PacketAction::Report => self.talk_report(reader).await,
+            PacketAction::Tell => self.talk_tell(reader).await,
+            PacketAction::Open => self.talk_open(reader).await,
+            PacketAction::Request => self.talk_request(reader).await,
             _ => tracing::error!("Unhandled packet Talk_{:?}", action),
         }
     }

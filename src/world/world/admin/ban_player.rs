@@ -50,6 +50,13 @@ impl World {
                 Some(ip) => ip,
                 None => return,
             };
+            // Players behind a proxy (nginx for the web client, Docker NAT) all share a private
+            // address: an IP ban on it would ban everyone, so such bans are account-only.
+            let ip = if is_shared_address(&ip) {
+                String::new()
+            } else {
+                ip
+            };
 
             let duration = duration_str::parse(&duration);
 
@@ -76,5 +83,27 @@ impl World {
                 }
             }
         });
+    }
+}
+
+fn is_shared_address(ip: &str) -> bool {
+    match ip.parse::<std::net::IpAddr>() {
+        Ok(std::net::IpAddr::V4(v4)) => v4.is_private() || v4.is_loopback() || v4.is_link_local(),
+        Ok(std::net::IpAddr::V6(v6)) => v6.is_loopback() || (v6.segments()[0] & 0xfe00) == 0xfc00,
+        Err(_) => true,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_shared_address;
+
+    #[test]
+    fn proxy_addresses_are_not_ip_banned() {
+        assert!(is_shared_address("172.18.0.1"));
+        assert!(is_shared_address("127.0.0.1"));
+        assert!(is_shared_address("10.1.2.3"));
+        assert!(is_shared_address("192.168.1.10"));
+        assert!(!is_shared_address("203.0.113.9"));
     }
 }

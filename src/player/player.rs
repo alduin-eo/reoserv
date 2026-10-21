@@ -48,6 +48,8 @@ pub struct Player {
     captcha: Option<Captcha>,
     timestamp: i32,
     spell_id: Option<i32>,
+    /// Server-side mute: None = can chat, Some(None) = permanent, Some(Some(t)) = until t (UTC)
+    mute: Option<Option<chrono::NaiveDateTime>>,
 }
 
 mod account;
@@ -61,6 +63,7 @@ mod get_ban_duration;
 mod get_file;
 mod get_welcome_request_data;
 mod handlers;
+mod moderation;
 #[macro_use]
 mod guild;
 mod generate_email_pin;
@@ -121,6 +124,7 @@ impl Player {
             captcha: None,
             timestamp: 0,
             spell_id: None,
+            mute: None,
         }
     }
 
@@ -132,6 +136,8 @@ impl Player {
             Command::ArenaDie { spawn_coords } => self.arena_die(spawn_coords).await,
             Command::CancelTrade => self.cancel_trade().await,
             Command::Close(reason) => self.close(reason).await,
+            Command::SetMute(mute) => self.set_mute(mute),
+            Command::DeliverWarnings => self.deliver_pending_warnings().await,
             Command::Die => self.die().await,
             Command::GenerateSessionId { respond_to } => {
                 let _ = respond_to.send(self.generate_session_id());
