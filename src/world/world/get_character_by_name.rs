@@ -29,8 +29,10 @@ impl World {
 
         let player = player.unwrap();
 
-        // Safe to assume this will work if we got this far
-        let character = player.get_character().await.unwrap();
-        Ok(character)
+        // Can fail when the player is between maps or has just disconnected but
+        // not been dropped from the world yet. This runs inside the World actor
+        // and release builds abort on panic, so never unwrap here (a whisper to
+        // a player who is logging out would take the whole server down unsaved).
+        player.get_character().await
     }
 }
