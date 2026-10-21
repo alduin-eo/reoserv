@@ -636,7 +636,7 @@ async fn maintenance_blocks(db: &crate::db::DbHandle, account_id: i32) -> bool {
         .await
         .ok()
         .flatten()
-        .and_then(|row| row.get_string(0))
+        .and_then(|row| row.get_text(0))
         .is_some_and(|v| v == "1");
     if !on {
         return false;

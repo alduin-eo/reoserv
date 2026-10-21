@@ -132,8 +132,8 @@ impl Player {
             let warning_id = row.get_int(0).unwrap_or(0);
             let packet = WarningOpenServerPacket {
                 warning_id,
-                category: row.get_string(1).unwrap_or_default(),
-                reason: row.get_string(2).unwrap_or_default(),
+                category: row.get_text(1).unwrap_or_default(),
+                reason: row.get_text(2).unwrap_or_default(),
                 issued_at: row
                     .get_date(3)
                     .map(|d| d.format("%B %-d, %Y").to_string())

@@ -21,6 +21,16 @@ impl Row {
         }
     }
 
+    /// Text column read as text even when the driver turned it into a number (values such as "1"
+    /// are converted to Int on read).
+    pub fn get_text(&self, index: usize) -> Option<String> {
+        match self.get(index) {
+            SqlValue::String(s) => Some(s),
+            SqlValue::Int(n) => Some(n.to_string()),
+            _ => None,
+        }
+    }
+
     pub fn get_int(&self, index: usize) -> Option<i32> {
         match self.get(index) {
             SqlValue::Int(n) => Some(n),

@@ -56,14 +56,14 @@ async fn process_pending(db: &DbHandle, world: &WorldHandle) -> anyhow::Result<(
     for row in rows {
         let request = Request {
             id: row.get_int(0).unwrap_or(0),
-            action: row.get_string(1).unwrap_or_default(),
+            action: row.get_text(1).unwrap_or_default(),
             account_id: row.get_int(2),
             character_id: row.get_int(3),
             payload: row
-                .get_string(4)
+                .get_text(4)
                 .and_then(|p| serde_json::from_str(&p).ok())
                 .unwrap_or(Value::Null),
-            by: row.get_string(5).unwrap_or_default(),
+            by: row.get_text(5).unwrap_or_default(),
         };
         // claim it (a second server instance or a retry never runs it twice)
         let claimed = db
@@ -168,7 +168,7 @@ async fn character_names(db: &DbHandle, account_id: i32) -> anyhow::Result<Vec<S
             &[("id", &account_id)],
         ))
         .await?;
-    Ok(rows.iter().filter_map(|r| r.get_string(0)).collect())
+    Ok(rows.iter().filter_map(|r| r.get_text(0)).collect())
 }
 
 /// Characters of the account that are in the game right now.
